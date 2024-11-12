@@ -195,6 +195,7 @@ Edit `/etc/locale.gen` and uncomment `en_GB.UTF-8 UTF-8` and other needed locale
 locale-gen
 ```
 Make language settings persistent by adding them to `/etc/locale.conf`
+```sh
 echo "LANG=en_GB.UTF-8" > /etc/locale.conf
 ```
 
