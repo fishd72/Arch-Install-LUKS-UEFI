@@ -105,7 +105,7 @@ Installs linux kernel, base dependencies and text editor
 ```sh
 pacstrap -i /mnt base base-devel linux linux-firmware lvm2 nano efibootmgr networkmanager zsh git curl openssh sysstat intel-ucode wget curl
 ```
-I usually install my other required packages now rather than after chroot'ing into the system
+I usually install my other required packages now rather than after chroot'ing into the system  
 _# If you're on AMD replace "intel-ucode" with "amd-ucode"_
 
 ## Generate fstab
@@ -143,7 +143,7 @@ Edit the entry file and add the required info
 ```sh
 nano /boot/loader/entries/arch.conf
 ```
-_# replace intel-ucode with amd-ucode if using AMD processor_
+_# replace intel-ucode with amd-ucode if using AMD processor_  
 _# replace <PARTITION_ID> with the UUID that we entered here with blkid in the previous step_
 
 ```conf
@@ -190,18 +190,17 @@ ln -sf /usr/share/zoneinfo/<REGION>/<CITY> /etc/localtime
 hwclock --systohc
 ```
 
+Edit `/etc/locale.gen` and uncomment `en_GB.UTF-8 UTF-8` and other needed locales. Generate the locales by running:
 ```sh
-# Edit /etc/locale.gen and uncomment en_GB.UTF-8 UTF-8 and other needed locales. Generate the locales by running:
 locale-gen
-
+```
+Make language settings persistent by adding them to `/etc/locale.conf`
 echo "LANG=en_GB.UTF-8" > /etc/locale.conf
 ```
 
-Setup your keyboard mapping and terminal font, and make them persistent
-
+Setup your keyboard mapping and terminal font, and make them persistent by adding them to `/etc/vconsole.conf`
 ```sh
 pacman -Sy terminus-font
-
 echo KEYMAP=uk\\nFONT=ter-v14n\\n > /etc/vconsole.conf
 ```
 
