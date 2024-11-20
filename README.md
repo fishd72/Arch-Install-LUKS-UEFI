@@ -159,9 +159,9 @@ Save and exit with `CTRL+x` and update bootloader
 bootctl update
 ```
 
-### Add modules to mkinitpcio
+### Add modules to mkinitcpio
 ```sh
-nano /etc/mkinitpcio.conf
+nano /etc/mkinitcpio.conf
 ```
 Update `HOOKS` to have `encrypt lvm2` between `keymap filesystems`
 ```conf
@@ -174,7 +174,7 @@ MODULES=(nvme)
 
 Save the file with `CTRL+x` and update initramfs
 ```sh
-mkinitpcio -p linux
+mkinitcpio -p linux
 ```
 
 ### Miscellaneous configuration 
