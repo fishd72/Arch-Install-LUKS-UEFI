@@ -103,7 +103,7 @@ swapon -s /dev/mapper/vg0-swap
 
 Installs linux kernel, base dependencies and text editor
 ```sh
-pacstrap -i /mnt base base-devel linux linux-firmware lvm2 nano efibootmgr networkmanager zsh git curl openssh sysstat intel-ucode wget curl
+pacstrap -i /mnt base base-devel linux linux-firmware lvm2 vi nano efibootmgr networkmanager zsh git openssh sysstat intel-ucode wget curl
 ```
 I usually install my other required packages now rather than after chroot'ing into the system  
 _# If you're on AMD replace "intel-ucode" with "amd-ucode"_
@@ -154,7 +154,20 @@ initrd /initramfs-linux.img
 options cryptdevice=UUID=<PARTITION_ID>:vg0 root=/dev/mapper/vg0-root quiet splash rw
 ```
 
-Save and exit with `CTRL+x` and update bootloader
+Save and exit with `CTRL+x`
+
+Edit the loader config
+```sh
+nano /boot/loader/loader.conf
+```
+```conf
+timeout 3
+#console-mode keep
+default arch.conf
+```
+
+Save and exit with `CTRL+x`
+
 ```sh
 bootctl update
 ```
@@ -199,10 +212,18 @@ Make language settings persistent by adding them to `/etc/locale.conf`
 echo "LANG=en_GB.UTF-8" > /etc/locale.conf
 ```
 
+Setup pacman to enable additional repos and parallel downloads
+```
+sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
+sed -i "/\[extra\]/,/Include/"'s/^#//' /etc/pacman.conf
+sed -i "s/^#ParallelDownloads/ParallelDownloads/" /etc/pacman.conf
+pacman -Sy
+```
+
 Setup your keyboard mapping and terminal font, and make them persistent by adding them to `/etc/vconsole.conf`
 ```sh
 pacman -Sy terminus-font
-echo KEYMAP=uk\\nFONT=ter-v14n\\n > /etc/vconsole.conf
+echo -e 'KEYMAP=uk\nFONT=ter-v14n\n' > /etc/vconsole.conf
 ```
 
 Setup your hostname
@@ -212,7 +233,7 @@ echo <HOSTNAME> > /etc/hostname
 
 Configure local name resolution
 ```sh
-echo 127.0.0.1 <HOSTNAME>\\n::1 <HOSTNAME\\n127.0.1.1 <HOSTNAME>.<DOMAIN> <HOSTNAME>\\n > /etc/hosts
+echo -e '127.0.0.1 <HOSTNAME>\n::1 <HOSTNAME>\n127.0.1.1 <HOSTNAME>.<DOMAIN> <HOSTNAME>\n' > /etc/hosts
 ```
 
 Setup root password:
@@ -235,6 +256,12 @@ pacman -Syy
 pacman -Syu
 ```
 
+If the device doesn't auto boot into Arch, clear any legacy config with:
+```bash
+sudo bootctl set-default ""
+sudo bootctl set-timeout ""
+```
+
 Create another user (DO NOT USE ROOT FOR DAILY USE!)
 ```bash
 useradd -m -g users -G wheel -s /bin/zsh <USERNAME>
@@ -246,6 +273,135 @@ Add user to SUDOERS
 visudo
 ```
 Find where it says `#wheel ALL=(ALL) ALL` and remove the `#`.
+
+## Install nice-to-haves
+```bash
+sudo pacman -Sy nano reflector openssh ufw less neo{vim,fetch}
+```
+
+## Install KDE Plasma
+```bash
+pacman -Sy {plasma,kde-applications,kde-system}-meta ttf-daddytime-mono-nerd aspell-en
+```
+
+## Install Media apps
+```bash
+pacman -Sy audex dragon elisa ffmpegthumbs kasts kmix 
+```
+
+## Install Network apps
+```bash
+pacman -Sy kde{connect,network-filesharing} kget kio-extras kio-zeroconf krfb tokodon
+```
+
+## Install Graphics apps
+```bash
+pacman -Sy arianna gwenview kdegraphics-thumbnailers koko okular spectacle svgpart
+```
+
+## Install Audio Subsystem
+```bash
+pacman -Sy alsa-utils pipe{wire,wire-audio,wire-alsa,wire-pulse} pavucontrol 
+```
+
+## Install System utils
+```bash
+pacman -Sy fwupd power-profiles-daemon unrar unzip
+```
+
+## Enable and start the greeter
+```bash
+systemctl enable sddm
+systemctl start sddm
+```
+
+## Install user Applications
+```bash
+pacman -Sy flatpak firefox-i18n-en-gb thunderbird-i18n-en-gb code
+```
+
+## Install and configure system for Yubikey
+```bash
+pacman -Sy yubikey-manager yubico-pam pam-u2f yubikey-full-disk-encryption
+mkdir -p ~/.config/Yubico
+pamu2fcfg > ~/.config/Yubico/u2f_keys
+sudo mkdir /etc/Yubico
+sudo mv ~/.config/Yubico/u2f_keys /etc/Yubico/u2f_keys
+ykpamcfg -2
+```
+
+```bash
+sudo nano /etc/pam.d/su
+```
+_# Add_ `auth            required        pam_yubico.so mode=challenge-response` _to end_
+```bash
+sudo nano /etc/pam.d/sudo
+```
+_# Add_ `auth            required        pam_yubico.so mode=challenge-response` _to end_
+```bash
+sudo nano /etc/pam.d/sddm
+```
+_# Add_ `auth        required    pam_u2f.so authfile=/etc/Yubico/u2f_keys` _to end_
+```bash
+sudo ykfde-enroll -d /dev/nvme0n1p2 -s 2
+sudo nano /etc/mkinitcpio.conf
+```
+_# Add_ `ykfde` _*before*_ `encrypt`
+```bash
+sudo nano /etc/ykfde.conf
+```
+_# Add to_ `YKFE_CHALLENGE` _and_ `YKFDE_CHALLENGE_SLOT`
+```bash
+sudo mkinitcpio -P
+```
+
+## Konsole setup
+```bash
+bash -c "$(wget -qO- https://git.io/vQgMr)"
+```
+
+## Gaming
+```bash
+pacman -Sy vulkan-radeon mesa corectrl mangohud lib32-mangohud goverlay gamemode steam
+```
+_# Add to_ `/etc/polkit-1/rules.d/90-corectrl.rules`
+```
+polkit.addRule(function(action, subject) {
+    if ((action.id == "org.corectrl.helper.init" ||
+         action.id == "org.corectrl.helperkiller.init") &&
+        subject.local == true &&
+        subject.active == true &&
+        subject.isInGroup("wheel")) {
+            return polkit.Result.YES;
+    }
+});
+```
+Add user to `gamemode` group so they can trigger it:
+```bash
+sudo usermod -aG gamemode <USER>
+```
+
+## Install 1Password and 1Password-cli
+
+Install as per the instructions at https://support.1password.com/install-linux/#arch-linux
+Recommended to install this app rather than the flatpak as the flatpak won't communicate with the SSH agent or browser extensions.
+```bash
+curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --import
+git clone https://aur.archlinux.org/1password.git
+cd 1password
+makepkg -si
+ARCH="amd64" && wget "https://cache.agilebits.com/dist/1P/op2/pkg/v2.30.3/op_linux_${ARCH}_v2.30.3.zip" -O op.zip && unzip -d op op.zip && sudo mv op/op /usr/local/bin/ && rm -r op.zip op && sudo groupadd -f onepassword-cli && sudo chgrp onepassword-cli /usr/local/bin/op && sudo chmod g+s /usr/local/bin/op
+```
+
+## Install additional flatpak apps
+```bash
+flatpak install flathub org.gtk.Gtk3theme.Breeze
+flatpak install flathub org.signal.Signal
+flatpak install flathub io.github.thetumultuousunicornofdarkness.cpu-x
+flatpak install flathub com.synology.SynologyDrive
+flatpak install flathub com.slack.Slack
+flatpak install flathub com.discordapp.Discord
+```
 
 ## Setup SSH
 
