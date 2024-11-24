@@ -320,6 +320,11 @@ systemctl start sddm
 pacman -Sy flatpak firefox-i18n-en-gb thunderbird-i18n-en-gb code
 ```
 
+## Install Libre Office
+```bash
+pacman -Sy libreoffice-fresh-en-gb
+```
+
 ## Install and configure system for Yubikey
 ```bash
 pacman -Sy yubikey-manager yubico-pam pam-u2f yubikey-full-disk-encryption
