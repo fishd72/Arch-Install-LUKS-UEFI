@@ -327,7 +327,7 @@ pacman -Sy libreoffice-fresh-en-gb
 
 ## Install virtualisation tooling (virt-manager/kvm/qemu)
 ```bash
-pacman -S qemu virt-manager virt-viewer dnsmasq vde2 bridge-utils openbsd-netcat dmidecode ebtables
+pacman -S qemu-base libvirt virt-install virt-manager virt-viewer edk2-ovmf swtpm qemu-img guestfs-tools libosinfo
 ```
 
 Enable nested virtualisation
@@ -341,7 +341,7 @@ _# Switch_ `kvm_intel` _to_ `kvm_amd` _if using an AMD processor_
 
 Add user account to allow VM use without additional authentication
 ```bash
-usermod -aG libvert <USER>
+usermod -aG libvirt <USER>
 ```
 
 ## Install and configure system for Yubikey
