@@ -325,6 +325,25 @@ pacman -Sy flatpak firefox-i18n-en-gb thunderbird-i18n-en-gb code
 pacman -Sy libreoffice-fresh-en-gb
 ```
 
+## Install virtualisation tooling (virt-manager/kvm/qemu)
+```bash
+pacman -S qemu virt-manager virt-viewer dnsmasq vde2 bridge-utils openbsd-netcat dmidecode ebtables
+```
+
+Enable nested virtualisation
+```bash
+lsmod | grep kvm
+modprobe -r kvm_intel
+sudo modprobe kvm_intel nested=1
+echo "options kvm_intel nested=1" | sudo tee /etc/modprobe.d/kvm_intel.conf
+```
+_# Switch_ `kvm_intel` _to_ `kvm_amd` _if using an AMD processor_
+
+Add user account to allow VM use without additional authentication
+```bash
+usermod -aG libvert <USER>
+```
+
 ## Install and configure system for Yubikey
 ```bash
 pacman -Sy yubikey-manager yubico-pam pam-u2f yubikey-full-disk-encryption
